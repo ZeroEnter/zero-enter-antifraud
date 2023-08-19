@@ -9,6 +9,7 @@ def main():
 
     features = preproc_data_features()
     output = inference_ekzl(features=features, device=device)
+
     return output
 
 
