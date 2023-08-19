@@ -31,7 +31,8 @@ def train():
     )
 
     features = torch.tensor(features, dtype=torch.float32)
-    targets = torch.tensor(targets, dtype=torch.long)
+    targets = torch.tensor(targets, dtype=torch.float32)
+    # targets = torch.tensor(targets, dtype=torch.long)
 
     mean, std = features.mean([0,]), features.std([0,])
     torch.save(mean, 'weights/mean.pt')
