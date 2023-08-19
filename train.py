@@ -17,6 +17,7 @@ def train():
     train_df_set, test_df_set = train_test_split(
         df_preprocessed, test_size=0.1, random_state=42
     )
+    print(f"train_df_set: {len(train_df_set)}, test_df_set: {len(test_df_set)}")
 
     print(f"save test_df_set to: {os.path.basename(path2save_test_df)}")
     test_df_set.to_csv(path2save_test_df, index_label=False)
