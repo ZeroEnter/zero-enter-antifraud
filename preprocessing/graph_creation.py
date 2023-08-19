@@ -88,7 +88,8 @@ def create_graph_dataset(df: pd.DataFrame):
     print(f"features.shape: {len(features)}")
 
     if "Is Fraud?" in df:
-        target = df["Is Fraud?"].values[:, None].tolist()
+        # target = df["Is Fraud?"].values[:, None].tolist()
+        target = df["Is Fraud?"].values.tolist()
         print(f"target: {len(target)}")
         return features, target
     else:

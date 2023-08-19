@@ -20,7 +20,9 @@ def simple_train_loop(
 
     model.train()
 
-    criterion = nn.BCEWithLogitsLoss()
+    # criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.CrossEntropyLoss()
+    # criterion = nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
     # Train the model
     for i in tqdm(range(num_epochs)):
