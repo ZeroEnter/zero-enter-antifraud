@@ -56,7 +56,7 @@ def train():
     )
     model.eval()
 
-    zkp_dir = "ezkl_inference/data_zkp"
+    zkp_dir = "../ezkl_inference/data_zkp"
     os.makedirs(zkp_dir, exist_ok=True)
     shutil.rmtree(zkp_dir)
     os.makedirs(zkp_dir, exist_ok=True)
@@ -71,8 +71,8 @@ def train():
     data_path = os.path.join(zkp_dir, "input.json")
     proof_path = os.path.join(zkp_dir, "test.pf")
 
-    torch.save(mean, "weights/mean.pt")
-    torch.save(std, "weights/std.pt")
+    torch.save(mean, "../weights/mean.pt")
+    torch.save(std, "../weights/std.pt")
     features = (features - mean) / std
 
     # Export the model
