@@ -7,6 +7,9 @@ from trainer import simple_train_loop
 from models import SimpleAntiFraudGNN
 from preprocessing import preproc_ibm_df, create_graph_dataset
 
+import torch.nn.functional as F
+from torchvision import transforms
+
 
 def train():
     path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
@@ -27,15 +30,23 @@ def train():
         df=train_df_set,
     )
 
-    features = torch.tensor(features, dtype=torch.float)
-    targets = torch.tensor(targets, dtype=torch.float)
+    features = torch.tensor(features, dtype=torch.float32)
+    targets = torch.tensor(targets, dtype=torch.float32)
+
+    mean, std = features.mean([0,]), features.std([0,])
+    torch.save(mean, 'weights/mean.pt')
+    torch.save(std, 'weights/std.pt')
+    features = (features - mean) / std
+    print(f"mean: {mean}, std: {std}")
 
     assert (
         features.shape[0] == targets.shape[0]
     ), f"features.shape[0] != targets.shape[0], {features.shape[0]} != {targets.shape[0]}"
 
-    model = SimpleAntiFraudGNN(input_dim=features.shape[1], hidden_dim=16)
-    model = simple_train_loop(num_epochs=201, model=model, features=features, targets=targets)
+    model = SimpleAntiFraudGNN()
+    model = simple_train_loop(
+        num_epochs=201, model=model, features=features, targets=targets
+    )
     return model
 
 

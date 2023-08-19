@@ -7,9 +7,11 @@ from torch import nn
 from trainer import simple_train_loop
 from models import SimpleAntiFraudGNN
 from preprocessing import preproc_ibm_df, create_graph_dataset
+import torch.nn.functional as F
 
 
 def test():
+    mean, std = torch.load('weights/mean.pt'), torch.load('weights/std.pt')
     path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
     d = "cuda:0" if torch.cuda.is_available() else "cpu"
     device = torch.device(d) if torch.cuda.is_available() else torch.device(d)
@@ -20,8 +22,9 @@ def test():
     features, targets = create_graph_dataset(
         df=test_df_set,
     )
-    features = torch.tensor(features, dtype=torch.float)
-    targets = torch.tensor(targets, dtype=torch.float)
+    features = torch.tensor(features, dtype=torch.float32)
+    features = (features - mean) / std
+    targets = torch.tensor(targets, dtype=torch.float32)
 
     print(f"features.shape: {features.shape}")
     print(f"target: {targets.shape}")
@@ -30,7 +33,7 @@ def test():
         features.shape[0] == targets.shape[0]
     ), f"features.shape[0] != targets.shape[0], {features.shape[0]} != {targets.shape[0]}"
 
-    model = SimpleAntiFraudGNN(input_dim=features.shape[1], hidden_dim=16)
+    model = SimpleAntiFraudGNN()
     dir2save_model = "weights"
     path2save_weights = os.path.join(
         dir2save_model, f"model_{model.__class__.__name__}.pth"

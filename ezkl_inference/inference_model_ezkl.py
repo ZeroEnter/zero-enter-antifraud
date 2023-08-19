@@ -8,10 +8,11 @@ from ezkl import ezkl
 
 from models import SimpleAntiFraudGNN
 from preprocessing import create_graph_dataset
+import torch.nn.functional as F
 
 
 def inference_ekzl(features, device):
-    features = torch.tensor(features, dtype=torch.float)
+    # features = 0.1 * torch.rand(1, *[10], requires_grad=True)
     print(f"features.shape: {features.shape}")
 
     zkp_dir = "ezkl_inference/data_zkp"
@@ -29,7 +30,7 @@ def inference_ekzl(features, device):
     data_path = os.path.join(zkp_dir, "input.json")
     proof_path = os.path.join(zkp_dir, "test.pf")
 
-    model = SimpleAntiFraudGNN(input_dim=features.shape[1], hidden_dim=16)
+    model = SimpleAntiFraudGNN()
     dir2save_model = "weights"
     path2save_weights = os.path.join(
         dir2save_model, f"model_{model.__class__.__name__}.pth"
@@ -55,9 +56,9 @@ def inference_ekzl(features, device):
         },
     )
 
-    data_array = ((features).detach().numpy()).reshape([-1]).tolist()
+    data_array = features.detach().numpy().tolist()
 
-    data = dict(input_data=[data_array])
+    data = dict(input_data=data_array)
 
     # Serialize data into file:
     json.dump(data, open(data_path, "w"))
@@ -70,12 +71,14 @@ def inference_ekzl(features, device):
 
     # srs path
     res = ezkl.get_srs(srs_path, settings_path)
+    assert res == True
 
     # now generate the witness file
 
     res = ezkl.gen_witness(
         data_path, compiled_model_path, witness_path, settings_path=settings_path
     )
+    print(res)
     assert os.path.isfile(witness_path)
 
     # HERE WE SETUP THE CIRCUIT PARAMS
@@ -97,9 +100,6 @@ def inference_ekzl(features, device):
     assert os.path.isfile(settings_path)
 
     # GENERATE A PROOF
-
-    proof_path = os.path.join("test.pf")
-
     res = ezkl.prove(
         witness_path,
         compiled_model_path,
@@ -128,6 +128,7 @@ def inference_ekzl(features, device):
 
 
 def preproc_data_features():
+    mean, std = torch.load('weights/mean.pt'), torch.load('weights/std.pt')
     path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
 
     print(f"load test_df_set to: {os.path.basename(path2save_test_df)}")
@@ -135,4 +136,6 @@ def preproc_data_features():
     features, targets = create_graph_dataset(
         df=test_df_set,
     )
+    features = torch.tensor(features, dtype=torch.float32)
+    features = (features - mean) / std
     return features
