@@ -8,9 +8,10 @@ from models import SimpleAntiFraudGNN
 from preprocessing import preproc_ibm_df, create_graph_dataset
 
 
-def train():
+def test():
     path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
-    device = torch.device("cuda:0")
+    d = "cuda:0" if torch.cuda.is_available() else "cpu"
+    device = torch.device(d) if torch.cuda.is_available() else torch.device(d)
 
     print(f"load test_df_set to: {os.path.basename(path2save_test_df)}")
     test_df_set = pd.read_csv(path2save_test_df)
@@ -34,7 +35,7 @@ def train():
         dir2save_model, f"model_{model.__class__.__name__}.pth"
     )
     model.load_state_dict(
-        torch.load(path2save_weights, map_location="cuda:0")
+        torch.load(path2save_weights, map_location=d)
     )  # Choose whatever GPU device number you want
     model.to(device)
 
@@ -42,4 +43,4 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
+    test()
