@@ -63,7 +63,12 @@ def inference_ekzl(features, device):
     # Serialize data into file:
     json.dump(data, open(data_path, "w"))
 
-    res = ezkl.gen_settings(model_path, settings_path)
+    run_args = ezkl.PyRunArgs()
+    run_args.input_visibility = "encrypted"
+    run_args.param_visibility = "public"
+    run_args.output_visibility = "public"
+
+    res = ezkl.gen_settings(model_path, settings_path, py_run_args=run_args)
     assert res == True
 
     res = ezkl.compile_model(model_path, compiled_model_path, settings_path)
@@ -128,7 +133,7 @@ def inference_ekzl(features, device):
 
 
 def preproc_data_features():
-    mean, std = torch.load('weights/mean.pt'), torch.load('weights/std.pt')
+    mean, std = torch.load("weights/mean.pt"), torch.load("weights/std.pt")
     path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
 
     print(f"load test_df_set to: {os.path.basename(path2save_test_df)}")
