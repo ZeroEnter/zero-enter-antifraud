@@ -43,4 +43,5 @@ class SimpleAntiFraudGNN(nn.Module):
         x = self.fc2(x)
         # x = self.sigmoid(x)
         # x = self.softmax(x)
-        return x.squeeze()
+        # return x.squeeze()
+        return x
