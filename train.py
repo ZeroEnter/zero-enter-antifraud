@@ -36,8 +36,8 @@ def train():
     mean, std = features.mean([0,]), features.std([0,])
     torch.save(mean, 'weights/mean.pt')
     torch.save(std, 'weights/std.pt')
-    features = (features - mean) / std
-    print(f"mean: {mean}, std: {std}")
+    # features = (features - mean) / std
+    # print(f"mean: {mean}, std: {std}")
 
     assert (
         features.shape[0] == targets.shape[0]
