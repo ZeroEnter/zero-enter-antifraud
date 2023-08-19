@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 import torch
+from torch import nn
 
 from trainer import simple_train_loop
 from models import SimpleAntiFraudGNN
@@ -39,7 +40,13 @@ def test():
     )  # Choose whatever GPU device number you want
     model.to(device)
 
-    return model
+    model.eval()
+    output = model(features)
+    criterion = nn.BCEWithLogitsLoss()
+    # Compute the loss
+    loss = criterion(output, targets)
+    print(loss)
+    return loss
 
 
 if __name__ == "__main__":
