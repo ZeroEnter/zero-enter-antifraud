@@ -19,11 +19,10 @@ def train():
         df=test_df_set,
     )
     features = torch.tensor(features, dtype=torch.float)
+    targets = torch.tensor(targets, dtype=torch.float)
 
     print(f"features.shape: {features.shape}")
-
-    target = torch.tensor(df["Is Fraud?"].values, dtype=torch.float)[:, None]
-    print(f"target: {target.shape}")
+    print(f"target: {targets.shape}")
 
     assert (
         features.shape[0] == targets.shape[0]
