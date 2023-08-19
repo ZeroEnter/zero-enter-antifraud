@@ -1,28 +1,5 @@
 # zero-enter-antifraud
 
-## Dataset
-
-The dataset of credit card transactions produced by IBM is publicly accessible and features a range of transaction details. It serves as a valuable source for fraud detection model testing and research. The dataset comprehensively includes information such as transaction amount, card type, transaction location and a marker denoting the legitimacy of the transaction. This dataset closely mirrors real-world transaction scenarios which entails a higher prevalence of legitimate transactions compared to fraudulent ones leading to class imbalance. The data included is provided by IBM and is synthetically generated, however, the particular process of simulation is not disclosed. It should be acknowledged that this data doesn't entail actual transactions or relate to any real customers or banks. 
-
-The dataset comprises:
-
-- 24 million distinctive transactions
-- 6,000 individual merchants
-- 100,000 different cards
-- 30,000 instances of fraud (representing 0.1% of. all transactions)
-
-You can download it from the following links:
-- https://drive.google.com/file/d/1yPf-39SInXyEtcjviH9e0qn-Rrn-t_8F/view?usp=sharing
-- https://www.kaggle.com/datasets/ealtman2019/credit-card-transactions?select=User0_credit_card_transactions.csv
-- https://ibm.ent.box.com/v/tabformer-data
-
-Just download it and unzip to data folder.
-
-
-### Fast Analysis
-
-![docs/img_plot_empty_fields_stats.png](docs/img_plot_empty_fields_stats.png)
-
 ## Graph Modeling
 
 ### Fraud detection using GNN and multigraph:
@@ -54,8 +31,4 @@ A type attribute is allocated to each node for distinguishing between cardid and
 Reason for opting a multigraph over the graph:
 
 Instances where the same user (cardid) procures from the identical merchant (Merchant Name) multiple times can lead to multiple edges between the involved user and merchant. This necessitates the requirement for a multigraph instead of a graph.
-
-![docs/img_graph.png](docs/img_graph.png)
-
-
 
