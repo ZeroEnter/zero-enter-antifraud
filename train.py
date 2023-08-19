@@ -1,5 +1,6 @@
 import os
 
+import torch
 from sklearn.model_selection import train_test_split
 
 from trainer import simple_train_loop
@@ -25,6 +26,9 @@ def train():
     features, targets = create_graph_dataset(
         df=train_df_set,
     )
+
+    features = torch.tensor(features, dtype=torch.float)
+    targets = torch.tensor(targets, dtype=torch.float)
 
     assert (
         features.shape[0] == targets.shape[0]

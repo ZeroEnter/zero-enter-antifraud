@@ -85,10 +85,8 @@ def create_graph_dataset(df: pd.DataFrame):
         ]
         features.append(edge_values)
 
-    features = torch.tensor(features, dtype=torch.float)
+    print(f"features.shape: {len(features)}")
 
-    print(f"features.shape: {features.shape}")
-
-    target = df["Is Fraud?"].values()[:, None].tolist()
-    print(f"target: {target.shape}")
+    target = df["Is Fraud?"].values[:, None].tolist()
+    print(f"target: {len(target)}")
     return features, target
