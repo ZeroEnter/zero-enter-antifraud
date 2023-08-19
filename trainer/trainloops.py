@@ -11,7 +11,7 @@ def simple_train_loop(
     features,
     targets,
     dir2save_model: str = "weights",
-    device: str = "cuda:0",
+    device: str = "cuda:0" if torch.cuda.is_available() else "cpu",
 ):
     device = torch.device(device)
     model = model.to(device)
