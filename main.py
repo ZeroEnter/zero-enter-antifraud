@@ -25,16 +25,13 @@ def string_to_hex(s):
     return binascii.hexlify(s).decode()
 
 
-def get_ml_proof_memos():
-
-    model_path = os.path.join(zkp_dir, "network.onnx")
+def get_ml_proof_memos(model_path=os.path.join(zkp_dir, "network.onnx"), data_path=os.path.join(zkp_dir, "input.json")):
     compiled_model_path = os.path.join(zkp_dir, "network.compiled")
     pk_path = os.path.join(zkp_dir, "test.pk")
     vk_path = os.path.join(zkp_dir, "test.vk")
     settings_path = os.path.join(zkp_dir, "settings.json")
     srs_path = os.path.join(zkp_dir, "kzg.srs")
     witness_path = os.path.join(zkp_dir, "witness.json")
-    data_path = os.path.join(zkp_dir, "input.json")
     proof_path = os.path.join(zkp_dir, "test.pf")
 
     run_args = ezkl.PyRunArgs()
