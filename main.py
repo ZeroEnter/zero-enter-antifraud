@@ -93,7 +93,7 @@ async def verify_files_url(
     return {"result": result}
 
 
-@app.post("/verify")
+@app.post("/verify_path")
 async def verify_files(
     test_vk: UploadFile = File(...),
     test_pf: UploadFile = File(...),
