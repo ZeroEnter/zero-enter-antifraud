@@ -11,3 +11,4 @@ jupyter
 onnx
 ezkl
 xrpl-py==2.2.0
+fastapi
