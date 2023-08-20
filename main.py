@@ -25,7 +25,10 @@ def string_to_hex(s):
     return binascii.hexlify(s).decode()
 
 
-def get_ml_proof_memos(model_path=os.path.join(zkp_dir, "network.onnx"), data_path=os.path.join(zkp_dir, "input.json")):
+def get_ml_proof_memos(
+    model_path=os.path.join(zkp_dir, "network.onnx"),
+    data_path=os.path.join(zkp_dir, "input.json"),
+):
     compiled_model_path = os.path.join(zkp_dir, "network.compiled")
     pk_path = os.path.join(zkp_dir, "test.pk")
     vk_path = os.path.join(zkp_dir, "test.vk")
@@ -100,16 +103,13 @@ def get_ml_proof_memos(model_path=os.path.join(zkp_dir, "network.onnx"), data_pa
     )
 
     assert res == True
-    print("verified")
+
     return [
         Memo.from_dict(
             {
                 "memo_data": res_proof["proof"],
                 "memo_type": string_to_hex("type/model.proof"),
             }
-        ),
-        Memo.from_dict(
-            {"memo_data": res_proof["proof"], "memo_type": string_to_hex("type/vk.key")}
         ),
     ]
 
