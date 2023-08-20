@@ -39,10 +39,10 @@ async def create_inference(input: UploadFile = File(...)):
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
-        "file_urls": [
-            f
+        "files": [
+            f.split("/")[-1]
             for f in files_to_send
-            if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+            if f.split("/")[-1] in ["test_ver.vk", "test_ver.pf", "kzg.srs", "settings.json"]
         ]
     }
 
