@@ -71,8 +71,8 @@ def train():
     data_path = os.path.join(zkp_dir, "input.json")
     proof_path = os.path.join(zkp_dir, "test.pf")
 
-    torch.save(mean, "../weights/mean.pt")
-    torch.save(std, "../weights/std.pt")
+    torch.save(mean, "weights/mean.pt")
+    torch.save(std, "weights/std.pt")
     features = (features - mean) / std
 
     # Export the model

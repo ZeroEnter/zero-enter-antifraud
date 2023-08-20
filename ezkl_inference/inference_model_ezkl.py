@@ -1,3 +1,4 @@
+import binascii
 import json
 import os
 import shutil
@@ -5,21 +6,18 @@ import shutil
 import pandas as pd
 import torch
 from ezkl import ezkl
+from xrpl.models import Memo
 
 from models import SimpleAntiFraudGNN
 from preprocessing import create_graph_dataset
+from ezkl_inference.create_model_data import *
 import torch.nn.functional as F
 
+zkp_dir = "ezkl_inference/data_zkp"
+os.makedirs(zkp_dir, exist_ok=True)
 
-def inference_ekzl(features, device):
-    # features = 0.1 * torch.rand(1, *[10], requires_grad=True)
-    print(f"features.shape: {features.shape}")
 
-    zkp_dir = "ezkl_inference/data_zkp"
-    os.makedirs(zkp_dir, exist_ok=True)
-    shutil.rmtree(zkp_dir)
-    os.makedirs(zkp_dir, exist_ok=True)
-
+def inference_ekzl():
     model_path = os.path.join(zkp_dir, "network.onnx")
     compiled_model_path = os.path.join(zkp_dir, "network.compiled")
     pk_path = os.path.join(zkp_dir, "test.pk")
@@ -29,39 +27,6 @@ def inference_ekzl(features, device):
     witness_path = os.path.join(zkp_dir, "witness.json")
     data_path = os.path.join(zkp_dir, "input.json")
     proof_path = os.path.join(zkp_dir, "test.pf")
-
-    model = SimpleAntiFraudGNN()
-    dir2save_model = "weights"
-    path2save_weights = os.path.join(
-        dir2save_model, f"model_{model.__class__.__name__}.pth"
-    )
-    model.load_state_dict(
-        torch.load(path2save_weights, map_location=device)
-    )  # Choose whatever GPU device number you want
-    model.to(device)
-
-    # Export the model
-    torch.onnx.export(
-        model,  # model being run
-        features,  # model input (or a tuple for multiple inputs)
-        model_path,  # where to save the model (can be a file or file-like object)
-        export_params=True,  # store the trained parameter weights inside the model file
-        opset_version=10,  # the ONNX version to export the model to
-        do_constant_folding=True,  # whether to execute constant folding for optimization
-        input_names=["input"],  # the model's input names
-        output_names=["output"],  # the model's output names
-        dynamic_axes={
-            "input": {0: "batch_size"},  # variable length axes
-            "output": {0: "batch_size"},
-        },
-    )
-
-    data_array = features.detach().numpy().tolist()
-
-    data = dict(input_data=data_array)
-
-    # Serialize data into file:
-    json.dump(data, open(data_path, "w"))
 
     run_args = ezkl.PyRunArgs()
     run_args.input_visibility = "encrypted"
@@ -105,7 +70,7 @@ def inference_ekzl(features, device):
     assert os.path.isfile(settings_path)
 
     # GENERATE A PROOF
-    res = ezkl.prove(
+    res_proof = ezkl.prove(
         witness_path,
         compiled_model_path,
         pk_path,
@@ -116,7 +81,7 @@ def inference_ekzl(features, device):
         settings_path,
     )
 
-    print(res)
+    print(res_proof)
     assert os.path.isfile(proof_path)
 
     # VERIFY IT
@@ -130,6 +95,7 @@ def inference_ekzl(features, device):
 
     assert res == True
     print("verified")
+    return True
 
 
 def preproc_data_features():
@@ -144,3 +110,8 @@ def preproc_data_features():
     features = torch.tensor(features, dtype=torch.float32)
     features = (features - mean) / std
     return features
+
+
+if __name__ == "__main__":
+    # create_model_data()
+    inference_ekzl()
