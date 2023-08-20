@@ -22,7 +22,8 @@ setup(
         "onnx",
         "ezkl",
         "fastapi",
-        "uvicorn"
+        "uvicorn",
+        "python-multipart"
     ],
     packages=find_packages(),
 )
