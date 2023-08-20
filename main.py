@@ -9,6 +9,9 @@ import shutil
 import asyncio
 import glob
 
+HOST = os.getenv("HOST", "localhost")
+PORT = os.getenv("PORT", 8000)
+
 zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
 
@@ -40,7 +43,7 @@ async def create_inference(input: UploadFile = File(...)):
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
         "files": [
-            f.split("/")[-1]
+            f"http://{HOST}:{PORT}/download/" + f.split("/")[-1]
             for f in files_to_send
             if f.split("/")[-1]
             in ["test_ver.vk", "test_ver.pf", "kzg.srs", "settings.json"]
