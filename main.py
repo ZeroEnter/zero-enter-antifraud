@@ -35,7 +35,7 @@ async def create_inference(input: UploadFile = File(...)):
     with open(os.path.join(zkp_dir, input.filename), "wb") as buffer:
         shutil.copyfileobj(input.file, buffer)
 
-    await inference_ekzl(data_path=input.file)
+    await inference_ekzl(data_path=os.path.join(zkp_dir, input.filename))
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
@@ -75,10 +75,10 @@ async def verify_files(
     with open(os.path.join(zkp_dir, settings_json.filename), "wb") as buffer:
         shutil.copyfileobj(settings_json.file, buffer)
 
-    result = await verify(proof_path=test_pf.file,
-                          settings_path=settings_json.file,
-                          vk_path=test_vk.file,
-                          srs_path=kzg_srs.file,
+    result = await verify(proof_path=os.path.join(zkp_dir, test_pf.filename),
+                          settings_path=os.path.join(zkp_dir, settings_json.filename),
+                          vk_path=os.path.join(zkp_dir, test_vk.filename),
+                          srs_path=os.path.join(zkp_dir, kzg_srs.filename),
                           )
 
     return {"result": result}
