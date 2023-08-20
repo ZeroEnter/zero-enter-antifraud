@@ -1,5 +1,5 @@
 import os
-
+import requests
 from ezkl import ezkl
 
 from ezkl_inference import inference_ekzl
@@ -42,7 +42,8 @@ async def create_inference(input: UploadFile = File(...)):
         "files": [
             f.split("/")[-1]
             for f in files_to_send
-            if f.split("/")[-1] in ["test_ver.vk", "test_ver.pf", "kzg.srs", "settings.json"]
+            if f.split("/")[-1]
+            in ["test_ver.vk", "test_ver.pf", "kzg.srs", "settings.json"]
         ]
     }
 
@@ -54,6 +55,36 @@ async def download_file(filename: str):
     return FileResponse(
         required_file, media_type="application/octet-stream", filename=filename
     )
+
+
+@app.post("/verify_url")
+async def verify_files_url(
+    test_vk_url: str,
+    test_pf_url: str,
+    kzg_srs_url: str,
+    settings_json_url: str,
+):
+    for url, filename in [
+        (test_vk_url, "test_vk.file"),
+        (test_pf_url, "test_pf.file"),
+        (kzg_srs_url, "kzg_srs.file"),
+        (settings_json_url, "settings_json.file"),
+    ]:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(os.path.join(zkp_dir, filename), "wb") as f:
+                f.write(response.content)
+        else:
+            return {"error": f"Failed to download {url}"}
+
+    result = await verify(
+        proof_path=os.path.join(zkp_dir, "test_pf.file"),
+        settings_path=os.path.join(zkp_dir, "settings_json.file"),
+        vk_path=os.path.join(zkp_dir, "test_vk.file"),
+        srs_path=os.path.join(zkp_dir, "kzg_srs.file"),
+    )
+
+    return {"result": result}
 
 
 @app.post("/verify")
@@ -75,10 +106,11 @@ async def verify_files(
     with open(os.path.join(zkp_dir, settings_json.filename), "wb") as buffer:
         shutil.copyfileobj(settings_json.file, buffer)
 
-    result = await verify(proof_path=os.path.join(zkp_dir, test_pf.filename),
-                          settings_path=os.path.join(zkp_dir, settings_json.filename),
-                          vk_path=os.path.join(zkp_dir, test_vk.filename),
-                          srs_path=os.path.join(zkp_dir, kzg_srs.filename),
-                          )
+    result = await verify(
+        proof_path=os.path.join(zkp_dir, test_pf.filename),
+        settings_path=os.path.join(zkp_dir, settings_json.filename),
+        vk_path=os.path.join(zkp_dir, test_vk.filename),
+        srs_path=os.path.join(zkp_dir, kzg_srs.filename),
+    )
 
     return {"result": result}
