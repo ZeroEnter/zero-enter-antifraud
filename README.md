@@ -57,5 +57,6 @@ Instances where the same user (cardid) procures from the identical merchant (Mer
 
 ![docs/img_graph.png](docs/img_graph.png)
 
+### Train result
 
-
+![docs/img_plot_metrics.png](docs/img_plot_metrics.png)

@@ -1,9 +1,9 @@
 import json
 import os
-import shutil
 
 import pandas as pd
 import torch
+from torch.autograd import Variable
 
 from models import SimpleAntiFraudGNN
 from preprocessing import create_graph_dataset
@@ -21,12 +21,13 @@ def preproc_data_features():
     features, targets = create_graph_dataset(
         df=test_df_set,
     )
-    features = torch.tensor(features, dtype=torch.float32)
-    features = (features - mean) / std
+    te_x = torch.Tensor(features).float()
+    te_x = (te_x - mean) / std
+    features = Variable(te_x)
     return features
 
 
-def create_model_data(
+def convert_model_data(
     data_path=os.path.join(zkp_dir, "input.json"),
     model_path=os.path.join(zkp_dir, "network.onnx"),
 ):
@@ -69,4 +70,4 @@ def create_model_data(
 
 
 if __name__ == "__main__":
-    create_model_data()
+    convert_model_data()

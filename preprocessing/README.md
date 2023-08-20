@@ -32,3 +32,7 @@ Reason for opting a multigraph over the graph:
 
 Instances where the same user (cardid) procures from the identical merchant (Merchant Name) multiple times can lead to multiple edges between the involved user and merchant. This necessitates the requirement for a multigraph instead of a graph.
 
+
+### Train result
+
+![../docs/img_plot_metrics.png](../docs/img_plot_metrics.png)

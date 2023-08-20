@@ -1,9 +1,16 @@
 from ezkl import ezkl
-
-from ezkl_inference.create_model_data import *
+import os
+from ezkl_inference.convert_model_data import *
 
 zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
+
+
+async def calibrate_settings(data_path, model_path, settings_path):
+    result = await ezkl.calibrate_settings(
+        data_path, model_path, settings_path, "resources"
+    )  # Optimize for resources
+    return result
 
 
 def inference_ekzl():
@@ -18,12 +25,15 @@ def inference_ekzl():
     proof_path = os.path.join(zkp_dir, "test.pf")
 
     run_args = ezkl.PyRunArgs()
-    run_args.input_visibility = "encrypted"
-    run_args.param_visibility = "public"
+    run_args.input_visibility = "private"
+    run_args.param_visibility = "private"
     run_args.output_visibility = "public"
 
     res = ezkl.gen_settings(model_path, settings_path, py_run_args=run_args)
     assert res == True
+
+    res = calibrate_settings(data_path, model_path, settings_path)
+    print(res)
 
     res = ezkl.compile_model(model_path, compiled_model_path, settings_path)
     assert res == True
