@@ -114,27 +114,3 @@ def get_ml_proof_memos(
     ]
 
 
-@click.command()
-@click.option(
-    "--admin_seed", default="snoPBrXtMeMyMHUVTgbuqAfg1SUTb", help="Admin seed"
-)  # seed 'sEdTE5SpNXuPc6h3oyGKaWfQXkyssPS'
-@click.option(
-    "--client_seed", default="sawmDjPis6h6AS9g5XYmviJ6N6EKu", help="Client seed"
-)
-def send_payment(admin_seed, client_seed):
-    client_account = Wallet.from_seed(client_seed)
-    admin_account = Wallet.from_seed(admin_seed)
-
-    my_tx_payment = Payment(
-        account=client_account.classic_address,
-        amount=xrp_to_drops(22),
-        destination=admin_account.classic_address,
-        # memos=get_ml_proof_memos()
-    )
-
-    tx_response = sign_and_submit(my_tx_payment, client, client_account)
-    print(tx_response)
-
-
-if __name__ == "__main__":
-    send_payment()
