@@ -19,7 +19,7 @@ def train():
     df_preprocessed = preproc_ibm_df(path_csv=path2df_pandas_ibm, n_samples=100000)
     print(df_preprocessed.head())
     train_df_set, test_df_set = train_test_split(
-        df_preprocessed, test_size=0.1, random_state=42
+        df_preprocessed, test_size=0.0001, random_state=42
     )
     print(f"train_df_set: {len(train_df_set)}, test_df_set: {len(test_df_set)}")
 

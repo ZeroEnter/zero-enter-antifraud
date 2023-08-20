@@ -2,13 +2,28 @@ import json
 import os
 import shutil
 
+import pandas as pd
 import torch
 
-from inference_model_ezkl import preproc_data_features
 from models import SimpleAntiFraudGNN
+from preprocessing import create_graph_dataset
 
 zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
+
+
+def preproc_data_features():
+    mean, std = torch.load("weights/mean.pt"), torch.load("weights/std.pt")
+    path2save_test_df = "data/preprocessed_test_set_credit_card_transactions-ibm_v2.csv"
+
+    print(f"load test_df_set to: {os.path.basename(path2save_test_df)}")
+    test_df_set = pd.read_csv(path2save_test_df)
+    features, targets = create_graph_dataset(
+        df=test_df_set,
+    )
+    features = torch.tensor(features, dtype=torch.float32)
+    features = (features - mean) / std
+    return features
 
 
 def create_model_data(
