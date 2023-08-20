@@ -1,9 +1,10 @@
+import json
 import os
 import requests
 from ezkl import ezkl
 
 from ezkl_inference import inference_ekzl
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.responses import FileResponse
 import shutil
 import asyncio
@@ -34,11 +35,13 @@ async def verify(
 
 
 @app.post("/inference")
-async def create_inference(input: UploadFile = File(...)):
-    with open(os.path.join(zkp_dir, input.filename), "wb") as buffer:
-        shutil.copyfileobj(input.file, buffer)
+async def create_inference(input: str = Body(...)):
+    input_data = json.loads(input)  # assuming that the input is JSON data as a string
+    filename = "input.json"
+    with open(os.path.join(zkp_dir, filename), "w") as file:
+        json.dump(input_data, file)
 
-    await inference_ekzl(data_path=os.path.join(zkp_dir, input.filename))
+    await inference_ekzl(data_path=os.path.join(zkp_dir, filename))
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
