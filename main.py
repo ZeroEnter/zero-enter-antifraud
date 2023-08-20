@@ -1,11 +1,16 @@
+import os
+from ezkl_inference import in
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 import shutil
 import asyncio
 import glob
 
-# создание экземпляра приложения FastAPI
+zkp_dir = "ezkl_inference/data_zkp"
+os.makedirs(zkp_dir, exist_ok=True)
+
 app = FastAPI()
+
 
 
 @app.post("/inference")
@@ -14,7 +19,7 @@ async def create_inference(input: UploadFile = File(...)):
         shutil.copyfileobj(input.file, buffer)
 
     await inference_ekzl()
-    # возвращаем файлы как ответы
+
     files_to_send = glob.glob(os.path.join(zkp_dir, '*'))
     return {"file_urls": [f for f in files_to_send if
                           f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]]}
@@ -44,7 +49,6 @@ async def verify_files(test_vk: UploadFile = File(...),
     with open(os.path.join(zkp_dir, settings_json.filename), "wb") as buffer:
         shutil.copyfileobj(settings_json.file, buffer)
 
-    # Вызывать функцию проверки здесь, подразумевает что вы определили ее в вашем коде
     result = await verify()
 
     return {"result": result}
