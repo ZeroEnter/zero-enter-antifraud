@@ -21,7 +21,8 @@ setup(
         "jupyter",
         "onnx",
         "ezkl",
-        "fastapi"
+        "fastapi",
+        "uvicorn"
     ],
     packages=find_packages(),
 )
