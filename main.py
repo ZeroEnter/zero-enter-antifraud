@@ -61,9 +61,11 @@ async def create_inference(item: Item):
                     f.write(response.content)
             else:
                 return {"error": f"Failed to download {input_data}"}
-            data = pd.read_csv(io.BytesIO(response.content))
+        data = pd.read_csv(io.BytesIO(response.content))
     else:
         data = pd.read_csv(input_data)
+
+    data = data.iloc[:1, :]
 
     data_path = convert_model_data(test_df_set=data)
     if not os.path.exists(data_path):

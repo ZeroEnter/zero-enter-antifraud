@@ -10,6 +10,7 @@ def create_graph_dataset(df: pd.DataFrame):
     """
     :type df: object
     """
+    df["Merchant Name"] = df["Merchant Name"].astype(str)
     # Create an empty graph
     G = nx.MultiGraph()
 
@@ -61,9 +62,9 @@ def create_graph_dataset(df: pd.DataFrame):
     print("Number of edges:", num_edges)
 
     # Convert the graph to an adjacency matrix
-    adj_matrix = nx.adjacency_matrix(G).todense()
-
-    print(f"adj_matrix.shape: {adj_matrix.shape}")
+    # adj_matrix = nx.adjacency_matrix(G).todense()
+    #
+    # print(f"adj_matrix.shape: {adj_matrix.shape}")
 
     # We define the variable "edge_list" which is a list of edges and their associated data in a graph G.
     # Then we create an empty list called "x" and iterates over each edge in the edge_list.
