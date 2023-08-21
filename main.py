@@ -96,10 +96,10 @@ async def verify_files_url(urls=Body(...)):
                 return {"error": f"Failed to download {url}"}
 
     result = await verify(
-        proof_path=os.path.join(zkp_dir, "test_pf.file"),
-        settings_path=os.path.join(zkp_dir, "settings_json.file"),
-        vk_path=os.path.join(zkp_dir, "test_vk.file"),
-        srs_path=os.path.join(zkp_dir, "kzg_srs.file"),
+        proof_path=os.path.join(zkp_dir, "test.pf"),
+        settings_path=os.path.join(zkp_dir, "settings.json"),
+        vk_path=os.path.join(zkp_dir, "test.vk"),
+        srs_path=os.path.join(zkp_dir, "kzg.srs"),
     )
 
     return {"result": result}
