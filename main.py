@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse
 import shutil
 import asyncio
 import glob
+import httpx
 
 HOST = os.getenv("HOST", "localhost")
 PORT = os.getenv("PORT", 8000)
@@ -63,15 +64,36 @@ async def download_file(filename: str):
     )
 
 
+# @app.post("/verify")
+# async def verify_files_url(urls=Body(...)):
+#     for field, url in urls.items():
+#         response = requests.get(url, stream=True)
+#         if response.status_code == 200:
+#             with open(os.path.join(zkp_dir, field), "wb") as f:
+#                 f.write(response.content)
+#         else:
+#             return {"error": f"Failed to download {url}"}
+#
+#     result = await verify(
+#         proof_path=os.path.join(zkp_dir, "test_pf.file"),
+#         settings_path=os.path.join(zkp_dir, "settings_json.file"),
+#         vk_path=os.path.join(zkp_dir, "test_vk.file"),
+#         srs_path=os.path.join(zkp_dir, "kzg_srs.file"),
+#     )
+#
+#     return {"result": result}
+
+
 @app.post("/verify")
 async def verify_files_url(urls=Body(...)):
-    for field, url in urls.items():
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            with open(os.path.join(zkp_dir, field), "wb") as f:
-                f.write(response.content)
-        else:
-            return {"error": f"Failed to download {url}"}
+    async with httpx.AsyncClient() as client:
+        for field, url in urls.items():
+            response = await client.get(url)
+            if response.status_code == 200:
+                with open(os.path.join(zkp_dir, field), "wb") as f:
+                    f.write(response.content)
+            else:
+                return {"error": f"Failed to download {url}"}
 
     result = await verify(
         proof_path=os.path.join(zkp_dir, "test_pf.file"),
@@ -81,7 +103,6 @@ async def verify_files_url(urls=Body(...)):
     )
 
     return {"result": result}
-
 
 @app.post("/verify_path")
 async def verify_files(
