@@ -69,7 +69,6 @@ async def create_inference(item: Item):
     if not os.path.exists(data_path):
         return {"files": []}
 
-    data_path = "ezkl_inference/data_zkp/input.json"
     await inference_ekzl(data_path=data_path)
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
