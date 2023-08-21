@@ -1,6 +1,8 @@
 import base64
+import binascii
 import glob
 import io
+import json
 import os
 import shutil
 
@@ -13,6 +15,12 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from ezkl_inference import inference_ekzl, convert_model_data
 import base64
+
+
+def string_to_hex(s):
+    if isinstance(s, str):
+        return binascii.hexlify(s.encode()).decode()
+    return binascii.hexlify(s).decode()
 
 
 def read_file_as_base64(filename):
@@ -28,10 +36,8 @@ os.makedirs(zkp_dir, exist_ok=True)
 
 app = FastAPI()
 
-rename = {
-    "test.vk": "vk",
-    "test.pf": "proof"
-}
+rename = {"test.vk": "vk", "test.pf": "proof"}
+
 
 class Item(BaseModel):
     input_data: str
@@ -84,15 +90,22 @@ async def create_inference(item: Item):
 
     await inference_ekzl(data_path=data_path)
 
-    files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
-    return {
-        "files": {
-            rename[f.split("/")[-1]]: read_file_as_base64(f)
-            for f in files_to_send
-            # if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
-            if f.split("/")[-1] in ["test.vk", "test.pf"]
-        }
-    }
+    with open(os.path.join(zkp_dir, "test.pf"), "r") as f:
+        pf = json.load(f)
+
+    with open(os.path.join(zkp_dir, "test.vk"), "rb") as f:
+        vk = string_to_hex(f.read())
+
+    return {"files": {"proof": pf["proof"], "vk": vk}}
+    # files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
+    # return {
+    #     "files": {
+    #         rename[f.split("/")[-1]]: read_file_as_base64(f)
+    #         for f in files_to_send
+    #         # if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+    #         if f.split("/")[-1] in ["test.vk", "test.pf"]
+    #     }
+    # }
 
 
 #
