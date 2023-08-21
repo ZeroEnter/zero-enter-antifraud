@@ -76,7 +76,7 @@ async def create_inference(item: Item):
     else:
         data = pd.read_csv(input_data)
 
-    # data = data.iloc[:1, :]
+    data = data.iloc[:1, :]
 
     data_path = convert_model_data(test_df_set=data)
     if not os.path.exists(data_path):
