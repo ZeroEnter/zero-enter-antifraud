@@ -186,16 +186,47 @@ async def download_file(filename: str):
 #     return {"result": result}
 
 
+# @app.post("/verify")
+# async def verify_files_url(urls=Body(...)):
+#     async with httpx.AsyncClient() as client:
+#         for field, url in urls.items():
+#             response = await client.get(url)
+#             if response.status_code == 200:
+#                 with open(os.path.join(zkp_dir, os.path.basename(url)), "wb") as f:
+#                     f.write(response.content)
+#             else:
+#                 return {"error": f"Failed to download {url}"}
+#
+#     result = await verify(
+#         proof_path=os.path.join(zkp_dir, "test.pf"),
+#         settings_path=os.path.join(zkp_dir, "settings.json"),
+#         vk_path=os.path.join(zkp_dir, "test.vk"),
+#         srs_path=os.path.join(zkp_dir, "kzg.srs"),
+#     )
+#
+#     return {"result": result}
+
+
 @app.post("/verify")
-async def verify_files_url(urls=Body(...)):
-    async with httpx.AsyncClient() as client:
-        for field, url in urls.items():
-            response = await client.get(url)
-            if response.status_code == 200:
-                with open(os.path.join(zkp_dir, os.path.basename(url)), "wb") as f:
-                    f.write(response.content)
-            else:
-                return {"error": f"Failed to download {url}"}
+async def verify_files_url(inputs=Body(...)):
+    for field, input_data in inputs.items():
+        if input_data.strip().endswith("="):
+            base64_bytes = input_data.encode("utf-8")
+            decoded_bytes = base64.b64decode(base64_bytes)
+            # decoded_string = decoded_bytes.decode("utf-8")
+            with open(os.path.join(zkp_dir, field), "wb") as f:
+                f.write(decoded_bytes)
+
+        elif input_data.startswith("http"):
+            async with httpx.AsyncClient() as client:
+                response = await client.get(input_data)
+                if response.status_code == 200:
+                    with open(
+                        os.path.join(zkp_dir, os.path.basename(input_data)), "wb"
+                    ) as f:
+                        f.write(response.content)
+                else:
+                    return {"error": f"Failed to download {input_data}"}
 
     result = await verify(
         proof_path=os.path.join(zkp_dir, "test.pf"),
