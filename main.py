@@ -28,6 +28,10 @@ os.makedirs(zkp_dir, exist_ok=True)
 
 app = FastAPI()
 
+rename = {
+    "test.vk": "vk",
+    "test.pf": "proof"
+}
 
 class Item(BaseModel):
     input_data: str
@@ -83,9 +87,10 @@ async def create_inference(item: Item):
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
         "files": {
-            f.split("/")[-1]: read_file_as_base64(f)
+            rename[f.split("/")[-1]]: read_file_as_base64(f)
             for f in files_to_send
-            if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+            # if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+            if f.split("/")[-1] in ["test.vk", "test.pf"]
         }
     }
 
