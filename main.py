@@ -35,8 +35,8 @@ async def verify(
 
 
 @app.post("/inference")
-async def create_inference(input: str = Body(...)):
-    input_data = json.loads(input)  # assuming that the input is JSON data as a string
+async def create_inference(input_data=Body(...)):
+    # input_data = json.loads(input)  # assuming that the input is JSON data as a string
     filename = "input.json"
     with open(os.path.join(zkp_dir, filename), "w") as file:
         json.dump(input_data, file)
