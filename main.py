@@ -1,15 +1,17 @@
-import json
+import base64
+import glob
+import io
 import os
+import shutil
+
+import httpx
+import pandas as pd
 import requests
 from ezkl import ezkl
-
-from ezkl_inference import inference_ekzl
 from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.responses import FileResponse
-import shutil
-import asyncio
-import glob
-import httpx
+from pydantic import BaseModel
+from ezkl_inference import inference_ekzl, convert_model_data
 
 HOST = os.getenv("HOST", "localhost")
 PORT = os.getenv("PORT", 8000)
@@ -18,6 +20,10 @@ zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
 
 app = FastAPI()
+
+
+class Item(BaseModel):
+    input_data: str
 
 
 async def verify(
@@ -36,13 +42,35 @@ async def verify(
 
 
 @app.post("/inference")
-async def create_inference(input_data=Body(...)):
-    # input_data = json.loads(input)  # assuming that the input is JSON data as a string
-    filename = "input.json"
-    with open(os.path.join(zkp_dir, filename), "w") as file:
-        json.dump(input_data, file)
+async def create_inference(item: Item):
+    input_data = item.input_data
 
-    await inference_ekzl(data_path=os.path.join(zkp_dir, filename))
+    if input_data.strip().endswith("="):
+        base64_bytes = input_data.encode("utf-8")
+        decoded_bytes = base64.b64decode(base64_bytes)
+        decoded_string = decoded_bytes.decode("utf-8")
+        data = pd.read_csv(io.StringIO(decoded_string))
+
+    elif input_data.startswith("http"):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(input_data)
+            if response.status_code == 200:
+                with open(
+                    os.path.join(zkp_dir, os.path.basename(input_data)), "wb"
+                ) as f:
+                    f.write(response.content)
+            else:
+                return {"error": f"Failed to download {input_data}"}
+            data = pd.read_csv(io.BytesIO(response.content))
+    else:
+        data = pd.read_csv(input_data)
+
+    data_path = convert_model_data(test_df_set=data)
+    if not os.path.exists(data_path):
+        return {"files": []}
+
+    data_path = "ezkl_inference/data_zkp/input.json"
+    await inference_ekzl(data_path=data_path)
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
@@ -50,7 +78,7 @@ async def create_inference(input_data=Body(...)):
             f"http://{HOST}:{PORT}/download/" + f.split("/")[-1]
             for f in files_to_send
             if f.split("/")[-1]
-            in ["test_ver.vk", "test_ver.pf", "kzg.srs", "settings.json"]
+            in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
         ]
     }
 
@@ -58,10 +86,15 @@ async def create_inference(input_data=Body(...)):
 @app.get("/download/{filename}")
 async def download_file(filename: str):
     file_location = glob.glob(os.path.join(zkp_dir, "*"))
-    required_file = [f for f in file_location if filename in f][0]
-    return FileResponse(
-        required_file, media_type="application/octet-stream", filename=filename
-    )
+
+    required_file = [f for f in file_location if filename in f]
+    if len(required_file) != 0:
+        required_file = required_file[0]
+        return FileResponse(
+            required_file, media_type="application/octet-stream", filename=filename
+        )
+    else:
+        return {"err": "file not found"}
 
 
 # @app.post("/verify")
@@ -103,6 +136,7 @@ async def verify_files_url(urls=Body(...)):
     )
 
     return {"result": result}
+
 
 @app.post("/verify_path")
 async def verify_files(

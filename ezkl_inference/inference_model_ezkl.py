@@ -23,11 +23,6 @@ async def inference_ekzl(data_path=os.path.join(zkp_dir, "input.json")):
     run_args.param_visibility = "private"
     run_args.output_visibility = "public"
 
-    run_args = ezkl.PyRunArgs()
-    run_args.input_visibility = "private"
-    run_args.param_visibility = "private"
-    run_args.output_visibility = "public"
-
     res = ezkl.gen_settings(model_path, settings_path, py_run_args=run_args)
     assert res == True
 
