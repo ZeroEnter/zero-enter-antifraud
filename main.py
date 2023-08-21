@@ -64,21 +64,11 @@ async def download_file(filename: str):
 
 
 @app.post("/verify_url")
-async def verify_files_url(
-    test_vk_url: str,
-    test_pf_url: str,
-    kzg_srs_url: str,
-    settings_json_url: str,
-):
-    for url, filename in [
-        (test_vk_url, "test_vk.file"),
-        (test_pf_url, "test_pf.file"),
-        (kzg_srs_url, "kzg_srs.file"),
-        (settings_json_url, "settings_json.file"),
-    ]:
+async def verify_files_url(urls=Body(...)):
+    for field, url in urls.items():
         response = requests.get(url, stream=True)
         if response.status_code == 200:
-            with open(os.path.join(zkp_dir, filename), "wb") as f:
+            with open(os.path.join(zkp_dir, field), "wb") as f:
                 f.write(response.content)
         else:
             return {"error": f"Failed to download {url}"}
