@@ -63,7 +63,7 @@ async def download_file(filename: str):
     )
 
 
-@app.post("/verify_url")
+@app.post("/verify")
 async def verify_files_url(urls=Body(...)):
     for field, url in urls.items():
         response = requests.get(url, stream=True)
