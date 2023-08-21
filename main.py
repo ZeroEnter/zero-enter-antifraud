@@ -12,6 +12,13 @@ from fastapi import FastAPI, UploadFile, File, Body
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from ezkl_inference import inference_ekzl, convert_model_data
+import base64
+
+
+def read_file_as_base64(filename):
+    with open(filename, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
 
 HOST = os.getenv("HOST", "localhost")
 PORT = os.getenv("PORT", 8000)
@@ -65,7 +72,7 @@ async def create_inference(item: Item):
     else:
         data = pd.read_csv(input_data)
 
-    data = data.iloc[:1, :]
+    # data = data.iloc[:1, :]
 
     data_path = convert_model_data(test_df_set=data)
     if not os.path.exists(data_path):
@@ -75,13 +82,56 @@ async def create_inference(item: Item):
 
     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     return {
-        "files": [
-            f"http://{HOST}:{PORT}/download/" + f.split("/")[-1]
+        "files": {
+            f.split("/")[-1]: read_file_as_base64(f)
             for f in files_to_send
-            if f.split("/")[-1]
-            in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
-        ]
+            if f.split("/")[-1] in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+        }
     }
+
+
+#
+# @app.post("/inference")
+# async def create_inference(item: Item):
+#     input_data = item.input_data
+#
+#     if input_data.strip().endswith("="):
+#         base64_bytes = input_data.encode("utf-8")
+#         decoded_bytes = base64.b64decode(base64_bytes)
+#         decoded_string = decoded_bytes.decode("utf-8")
+#         data = pd.read_csv(io.StringIO(decoded_string))
+#
+#     elif input_data.startswith("http"):
+#         async with httpx.AsyncClient() as client:
+#             response = await client.get(input_data)
+#             if response.status_code == 200:
+#                 with open(
+#                     os.path.join(zkp_dir, os.path.basename(input_data)), "wb"
+#                 ) as f:
+#                     f.write(response.content)
+#             else:
+#                 return {"error": f"Failed to download {input_data}"}
+#         data = pd.read_csv(io.BytesIO(response.content))
+#     else:
+#         data = pd.read_csv(input_data)
+#
+#     data = data.iloc[:1, :]
+#
+#     data_path = convert_model_data(test_df_set=data)
+#     if not os.path.exists(data_path):
+#         return {"files": []}
+#
+#     await inference_ekzl(data_path=data_path)
+#
+#     files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
+#     return {
+#         "files": [
+#             f"http://{HOST}:{PORT}/download/" + f.split("/")[-1]
+#             for f in files_to_send
+#             if f.split("/")[-1]
+#             in ["test.vk", "test.pf", "kzg.srs", "settings.json"]
+#         ]
+#     }
 
 
 @app.get("/download/{filename}")

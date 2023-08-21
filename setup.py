@@ -23,7 +23,8 @@ setup(
         "ezkl",
         "fastapi",
         "uvicorn",
-        "python-multipart"
+        "python-multipart",
+        "tqdm"
     ],
     packages=find_packages(),
 )
