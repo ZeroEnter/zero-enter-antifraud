@@ -16,4 +16,4 @@ class SimpleAntiFraudGNN(nn.Module):
         x = self.fc3(x)
         x = self.softmax(x)
 
-        return x.squeeze(dim=1)
+        return x
