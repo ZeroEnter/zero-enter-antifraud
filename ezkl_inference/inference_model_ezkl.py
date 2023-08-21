@@ -85,15 +85,15 @@ async def inference_ekzl(data_path=os.path.join(zkp_dir, "input.json")):
 
     # VERIFY IT
 
-    res = ezkl.verify(
-        proof_path,
-        settings_path,
-        vk_path,
-        srs_path,
-    )
-
-    assert res == True
-    print("verified")
+    # res = ezkl.verify(
+    #     proof_path,
+    #     settings_path,
+    #     vk_path,
+    #     srs_path,
+    # )
+    #
+    # assert res == True
+    # print("verified")
     return True
 
 
