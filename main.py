@@ -90,7 +90,7 @@ async def verify_files_url(urls=Body(...)):
         for field, url in urls.items():
             response = await client.get(url)
             if response.status_code == 200:
-                with open(os.path.join(zkp_dir, field), "wb") as f:
+                with open(os.path.join(zkp_dir, os.path.basename(url)), "wb") as f:
                     f.write(response.content)
             else:
                 return {"error": f"Failed to download {url}"}
