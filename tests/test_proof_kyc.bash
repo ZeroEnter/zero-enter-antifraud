@@ -1,0 +1,1 @@
+curl -X POST "http://localhost:8000/inference" -H "accept: application/json" -H "Content-Type: application/json" -d '{"input_data": "[[29.0, 0.0], [17.0, 1.0], [27.0, 1.0], [21.0, 1.0]]}", "link_onnx": "https://github.com/ZeroEnter/zero-enter-antifraud/blob/main/weights/model_SimpleAntiFraudGNN.pth", "type_model": "simple_kyc"}'
