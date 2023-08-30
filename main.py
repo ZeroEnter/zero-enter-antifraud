@@ -90,7 +90,10 @@ async def create_inference(item: Item):
         data = data.iloc[:1, :]
 
         data_path = convert_model_data(
-            test_df_set=data, model_path=model_path, data_path=data_path, model_path_pytorch=model_path_pytorch
+            test_df_set=data,
+            model_path=model_path,
+            data_path=data_path,
+            model_path_pytorch=model_path_pytorch,
         )
         if not os.path.exists(data_path):
             return {"files": {"proof": None, "vk": None}}
@@ -107,8 +110,6 @@ async def create_inference(item: Item):
         features_ = json.loads(input_data)
         te_x = torch.Tensor(features_).float()
         features = Variable(te_x)
-        a = model(features)
-
 
         # Export the model
         torch.onnx.export(
@@ -140,10 +141,10 @@ async def create_inference(item: Item):
     with open(os.path.join(zkp_dir, f"test_{type_model}.pf"), "r") as f:
         pf = json.load(f)
 
-    with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
-        vk = string_to_hex(f.read())
+    # with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
+    #     vk = f.read()
 
-    return {"files": {"proof": pf, "vk": vk}}
+    return {"files": {"proof": pf, "vk": read_file_as_base64(os.path.join(zkp_dir, f"test_{type_model}.vk"))}}
     # files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     # return {
     #     "files": {
