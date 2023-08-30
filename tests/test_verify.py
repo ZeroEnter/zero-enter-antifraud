@@ -16,10 +16,11 @@ def test():
     zkp_dir = "ezkl_inference/data_zkp"
     url = "http://localhost:8000/verify"
 
-    vk_path = os.path.join(zkp_dir, "test.vk")
-    settings_path = os.path.join(zkp_dir, "settings.json")
-    srs_path = os.path.join(zkp_dir, "kzg.srs")
-    proof_path = os.path.join(zkp_dir, "test.pf")
+    type_model = "anti_fraud"
+    vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
+    settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
+    srs_path = os.path.join(zkp_dir, f"kzg_{type_model}.srs")
+    proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
 
     headers = {"Content-Type": "application/json"}
     data = {
