@@ -17,7 +17,4 @@ class SimpleKYC(nn.Module):
         :param x: torch tensor array: []
         :return:
         """
-        x_year = torch.where(x > self.country_year[:, 0].squeeze(), 1.0, 0.0)
-        x_country = torch.where(x == self.country_year[:, 1].squeeze(), 1.0, 0.0)
-        x = x_year @ x_country
         return x
