@@ -99,13 +99,9 @@ async def create_inference(item: Item):
         device = torch.device("cpu")
 
         model = SimpleKYC()
-        # dir2save_model = "weights"
-        # path2save_weights = os.path.join(
-        #     dir2save_model, f"model_{model.__class__.__name__}.pth"
-        # )
-        # model.load_state_dict(
-        #     torch.load(path2save_weights, map_location=device)
-        # )  # Choose whatever GPU device number you want
+        model.load_state_dict(
+            torch.load(model_path_pytorch, map_location=device)
+        )  # Choose whatever GPU device number you want
         model.to(device)
 
         features = json.loads(input_data)
@@ -147,7 +143,7 @@ async def create_inference(item: Item):
     with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
         vk = string_to_hex(f.read())
 
-    return {"files": {"proof": pf["proof"], "vk": vk}}
+    return {"files": {"proof": pf, "vk": vk}}
     # files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     # return {
     #     "files": {
