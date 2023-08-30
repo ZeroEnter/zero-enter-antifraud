@@ -61,34 +61,41 @@ async def verify(
 @app.post("/inference")
 async def create_inference(item: Item):
     input_data = item.input_data
+    type_model = item.type_model
+    link_onnx = item.link_onnx
+    model_path = os.path.join(zkp_dir, f"network_{type_model}.onnx")
+    data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
 
-    if input_data.strip().endswith("="):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(link_onnx)
+        if response.status_code == 200:
+            with open(model_path, "wb") as f:
+                f.write(response.content)
+        else:
+            return {"error": f"Failed to download {link_onnx}"}
+
+    if type_model == "anti_fraud":
         base64_bytes = input_data.encode("utf-8")
         decoded_bytes = base64.b64decode(base64_bytes)
         decoded_string = decoded_bytes.decode("utf-8")
         data = pd.read_csv(io.StringIO(decoded_string))
 
-    elif input_data.startswith("http"):
-        async with httpx.AsyncClient() as client:
-            response = await client.get(input_data)
-            if response.status_code == 200:
-                with open(
-                    os.path.join(zkp_dir, os.path.basename(input_data)), "wb"
-                ) as f:
-                    f.write(response.content)
-            else:
-                return {"error": f"Failed to download {input_data}"}
-        data = pd.read_csv(io.BytesIO(response.content))
+        data = data.iloc[:1, :]
+
+        data_path = convert_model_data(
+            test_df_set=data, model_path=model_path, data_path=data_path
+        )
+        if not os.path.exists(data_path):
+            return {"files": {"proof": None, "vk": None}}
+
+    elif type_model == "simple_kyc":
+        with open(data_path, "w", encoding="utf8") as f:
+            f.write(input_data)
+
     else:
-        data = pd.read_csv(input_data)
+        return {"files": {"proof": None, "vk": None}}
 
-    data = data.iloc[:1, :]
-
-    data_path = convert_model_data(test_df_set=data)
-    if not os.path.exists(data_path):
-        return {"files": []}
-
-    await inference_ekzl(data_path=data_path)
+    await inference_ekzl(data_path=data_path, model_path=model_path)
 
     with open(os.path.join(zkp_dir, "test.pf"), "r") as f:
         pf = json.load(f)

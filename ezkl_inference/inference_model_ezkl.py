@@ -8,8 +8,7 @@ zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
 
 
-async def inference_ekzl(data_path=os.path.join(zkp_dir, "input.json")):
-    model_path = os.path.join(zkp_dir, "network.onnx")
+async def inference_ekzl(data_path=os.path.join(zkp_dir, "input.json"), model_path=os.path.join(zkp_dir, "network.onnx")):
     compiled_model_path = os.path.join(zkp_dir, "network.compiled")
     pk_path = os.path.join(zkp_dir, "test.pk")
     vk_path = os.path.join(zkp_dir, "test.vk")
