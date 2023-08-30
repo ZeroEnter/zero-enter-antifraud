@@ -70,12 +70,13 @@ async def create_inference(item: Item):
     type_model = item.type_model
     link_onnx = item.link_onnx
     model_path = os.path.join(zkp_dir, f"network_{type_model}.onnx")
+    model_path_pytorch = os.path.join(zkp_dir, f"network_{type_model}.pth")
     data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
 
     async with httpx.AsyncClient() as client:
         response = await client.get(link_onnx)
         if response.status_code == 200:
-            with open(model_path, "wb") as f:
+            with open(model_path_pytorch, "wb") as f:
                 f.write(response.content)
         else:
             return {"error": f"Failed to download {link_onnx}"}
@@ -89,7 +90,7 @@ async def create_inference(item: Item):
         data = data.iloc[:1, :]
 
         data_path = convert_model_data(
-            test_df_set=data, model_path=model_path, data_path=data_path
+            test_df_set=data, model_path=model_path, data_path=data_path, model_path_pytorch=model_path_pytorch
         )
         if not os.path.exists(data_path):
             return {"files": {"proof": None, "vk": None}}

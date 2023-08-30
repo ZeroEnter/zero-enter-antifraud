@@ -83,17 +83,15 @@ def convert_model_data(
     test_df_set: pd.DataFrame,
     model_path=os.path.join(zkp_dir, "network.onnx"),
     data_path=os.path.join(zkp_dir, "input.json"),
+    model_path_pytorch=os.path.join(zkp_dir, "weights", "model_SimpleAntiFraudGNN.pth"),
 ):
     device = torch.device("cpu")
     features = preproc_data_features_pd(test_df_set=test_df_set)
 
     model = SimpleAntiFraudGNN()
-    dir2save_model = "weights"
-    path2save_weights = os.path.join(
-        dir2save_model, f"model_{model.__class__.__name__}.pth"
-    )
+
     model.load_state_dict(
-        torch.load(path2save_weights, map_location=device)
+        torch.load(model_path_pytorch, map_location=device)
     )  # Choose whatever GPU device number you want
     model.to(device)
 
