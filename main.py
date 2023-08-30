@@ -140,10 +140,10 @@ async def create_inference(item: Item):
         data_path=data_path, model_path=model_path, type_model=type_model
     )
 
-    with open(os.path.join(zkp_dir, "test.pf"), "r") as f:
+    with open(os.path.join(zkp_dir, f"test_{type_model}.pf"), "r") as f:
         pf = json.load(f)
 
-    with open(os.path.join(zkp_dir, "test.vk"), "rb") as f:
+    with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
         vk = string_to_hex(f.read())
 
     return {"files": {"proof": pf["proof"], "vk": vk}}
