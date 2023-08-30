@@ -104,9 +104,11 @@ async def create_inference(item: Item):
         )  # Choose whatever GPU device number you want
         model.to(device)
 
-        features = json.loads(input_data)
-        te_x = torch.Tensor(features).float()
+        features_ = json.loads(input_data)
+        te_x = torch.Tensor(features_).float()
         features = Variable(te_x)
+        a = model(features)
+
 
         # Export the model
         torch.onnx.export(
@@ -124,9 +126,7 @@ async def create_inference(item: Item):
             },
         )
 
-        data_array = features.detach().numpy().tolist()
-
-        data = dict(input_data=data_array)
+        data = dict(input_data=features_)
 
         # Serialize data into file:
         json.dump(data, open(data_path, "w"))
