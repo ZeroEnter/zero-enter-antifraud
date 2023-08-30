@@ -30,7 +30,7 @@ def test():
     }
 
     response = requests.post(url, headers=headers, json=data)
-    print(response)
+    print(response.content)
 
 
 if __name__ == "__main__":
