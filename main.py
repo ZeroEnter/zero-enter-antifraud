@@ -133,7 +133,6 @@ async def create_inference(item: Item):
 
         # Serialize data into file:
         json.dump(data, open(data_path, "w"))
-        return data_path
     else:
         return {"files": {"proof": None, "vk": None}}
 
