@@ -8,14 +8,18 @@ zkp_dir = "ezkl_inference/data_zkp"
 os.makedirs(zkp_dir, exist_ok=True)
 
 
-async def inference_ekzl(data_path=os.path.join(zkp_dir, "input.json"), model_path=os.path.join(zkp_dir, "network.onnx"), type_model: str = ""):
+async def inference_ekzl(
+    vk_path,
+    settings_path,
+    srs_path,
+    proof_path,
+    data_path=os.path.join(zkp_dir, "input.json"),
+    model_path=os.path.join(zkp_dir, "network.onnx"),
+    type_model: str = "",
+):
     compiled_model_path = os.path.join(zkp_dir, f"network_{type_model}.compiled")
     pk_path = os.path.join(zkp_dir, f"test_{type_model}.pk")
-    vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
-    settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
-    srs_path = os.path.join(zkp_dir, f"kzg_{type_model}.srs")
     witness_path = os.path.join(zkp_dir, f"witness_{type_model}.json")
-    proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
 
     run_args = ezkl.PyRunArgs()
     run_args.input_visibility = "private"

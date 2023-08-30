@@ -73,6 +73,11 @@ async def create_inference(item: Item):
     model_path_pytorch = os.path.join(zkp_dir, f"network_{type_model}.pth")
     data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
 
+    vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
+    settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
+    srs_path = os.path.join(zkp_dir, f"kzg_{type_model}.srs")
+    proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
+
     async with httpx.AsyncClient() as client:
         response = await client.get(link_onnx)
         if response.status_code == 200:
@@ -96,7 +101,12 @@ async def create_inference(item: Item):
             model_path_pytorch=model_path_pytorch,
         )
         if not os.path.exists(data_path):
-            return {"files": {"proof": None, "vk": None}}
+            return {
+                "test.vk": None,
+                "test.pf": None,
+                "kzg.srs": None,
+                "settings.json": None,
+            }
 
     elif type_model == "simple_kyc":
         device = torch.device("cpu")
@@ -132,19 +142,34 @@ async def create_inference(item: Item):
         # Serialize data into file:
         json.dump(data, open(data_path, "w"))
     else:
-        return {"files": {"proof": None, "vk": None}}
+        return {
+            "test.vk": None,
+            "test.pf": None,
+            "kzg.srs": None,
+            "settings.json": None,
+        }
 
     await inference_ekzl(
-        data_path=data_path, model_path=model_path, type_model=type_model
+        vk_path=vk_path,
+        settings_path=settings_path,
+        srs_path=srs_path,
+        proof_path=proof_path,
+        data_path=data_path,
+        model_path=model_path,
+        type_model=type_model,
     )
 
-    with open(os.path.join(zkp_dir, f"test_{type_model}.pf"), "r") as f:
-        pf = json.load(f)
+    return {
+        "test.vk": read_file_as_base64(vk_path),
+        "test.pf": read_file_as_base64(proof_path),
+        "kzg.srs": read_file_as_base64(srs_path),
+        "settings.json": read_file_as_base64(settings_path),
+    }
 
     # with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
     #     vk = f.read()
 
-    return {"files": {"proof": pf, "vk": read_file_as_base64(os.path.join(zkp_dir, f"test_{type_model}.vk"))}}
+    # return {"files": {"proof": pf, "vk": read_file_as_base64(os.path.join(zkp_dir, f"test_{type_model}.vk"))}}
     # files_to_send = glob.glob(os.path.join(zkp_dir, "*"))
     # return {
     #     "files": {
