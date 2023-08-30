@@ -137,7 +137,9 @@ async def create_inference(item: Item):
     else:
         return {"files": {"proof": None, "vk": None}}
 
-    await inference_ekzl(data_path=data_path, model_path=model_path)
+    await inference_ekzl(
+        data_path=data_path, model_path=model_path, type_model=type_model
+    )
 
     with open(os.path.join(zkp_dir, "test.pf"), "r") as f:
         pf = json.load(f)
@@ -259,23 +261,11 @@ async def download_file(filename: str):
 @app.post("/verify")
 async def verify_files_url(inputs=Body(...)):
     for field, input_data in inputs.items():
-        if input_data.strip().endswith("="):
-            base64_bytes = input_data.encode("utf-8")
-            decoded_bytes = base64.b64decode(base64_bytes)
-            # decoded_string = decoded_bytes.decode("utf-8")
-            with open(os.path.join(zkp_dir, field), "wb") as f:
-                f.write(decoded_bytes)
-
-        elif input_data.startswith("http"):
-            async with httpx.AsyncClient() as client:
-                response = await client.get(input_data)
-                if response.status_code == 200:
-                    with open(
-                        os.path.join(zkp_dir, os.path.basename(input_data)), "wb"
-                    ) as f:
-                        f.write(response.content)
-                else:
-                    return {"error": f"Failed to download {input_data}"}
+        base64_bytes = input_data.encode("utf-8")
+        decoded_bytes = base64.b64decode(base64_bytes)
+        # decoded_string = decoded_bytes.decode("utf-8")
+        with open(os.path.join(zkp_dir, field), "wb") as f:
+            f.write(decoded_bytes)
 
     result = await verify(
         proof_path=os.path.join(zkp_dir, "test.pf"),
