@@ -72,6 +72,7 @@ async def create_inference(item: Item):
     model_path = os.path.join(zkp_dir, f"network_{type_model}.onnx")
     model_path_pytorch = os.path.join(zkp_dir, f"network_{type_model}.pth")
     data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
+    data_path_pre = os.path.join(zkp_dir, f"pre_input_{type_model}.json")
 
     vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
     settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
@@ -87,10 +88,11 @@ async def create_inference(item: Item):
             return {"error": f"Failed to download {link_onnx}"}
 
     if type_model == "anti_fraud":
-        base64_bytes = input_data.encode("utf-8")
-        decoded_bytes = base64.b64decode(base64_bytes)
-        decoded_string = decoded_bytes.decode("utf-8")
-        data = pd.read_csv(io.StringIO(decoded_string))
+        # base64_bytes = input_data.encode("utf-8")
+        # decoded_bytes = base64.b64decode(base64_bytes)
+        # decoded_string = decoded_bytes.decode("utf-8")
+        # data = pd.read_csv(io.StringIO(decoded_string))
+        data = pd.read_csv(input_data)
 
         data = data.iloc[:1, :]
 
@@ -117,7 +119,17 @@ async def create_inference(item: Item):
         )  # Choose whatever GPU device number you want
         model.to(device)
 
-        features_ = json.loads(input_data)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(input_data)
+            if response.status_code == 200:
+                with open(data_path_pre, "wb") as f:
+                    f.write(response.content)
+            else:
+                return {"error": f"Failed to download {link_onnx}"}
+
+        with open(data_path_pre, "r") as f:
+            features_ = json.load(f)
+
         te_x = torch.Tensor(features_).float()
         features = Variable(te_x)
 
