@@ -5,6 +5,7 @@ import io
 import json
 import os
 import shutil
+from typing import List
 
 import httpx
 import pandas as pd
@@ -32,6 +33,11 @@ def read_file_as_base64(filename):
         return base64.b64encode(f.read()).decode("utf-8")
 
 
+MAP_RES = {
+    "US": 0.0,
+    "Luxembourg": 1.0,
+}
+
 HOST = os.getenv("HOST", "localhost")
 PORT = os.getenv("PORT", 8000)
 
@@ -47,6 +53,10 @@ class Item(BaseModel):
     input_data: str
     type_model: str
     link_onnx: str
+
+
+class ItemMain(BaseModel):
+    input_data: List[Item]
 
 
 async def verify(
@@ -65,86 +75,70 @@ async def verify(
 
 
 @app.post("/inference")
-async def create_inference(item: Item):
-    input_data = item.input_data
-    type_model = item.type_model
-    link_onnx = item.link_onnx
-    model_path = os.path.join(zkp_dir, f"network_{type_model}.onnx")
-    model_path_pytorch = os.path.join(zkp_dir, f"network_{type_model}.pth")
-    data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
-    data_path_pre = os.path.join(zkp_dir, f"pre_input_{type_model}.json")
+async def create_inference(item: ItemMain):
+    input_data_main = item.input_data
+    output_data_main = {
+        "test.vk": [],
+        "test.pf": [],
+        "kzg.srs": [],
+        "settings.json": [],
+    }
 
-    vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
-    settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
-    srs_path = os.path.join(zkp_dir, f"kzg_{type_model}.srs")
-    proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
+    for input_data in input_data_main:
+        type_model = input_data.type_model
+        link_onnx = input_data.link_onnx
+        model_path = os.path.join(zkp_dir, f"network_{type_model}.onnx")
+        model_path_pytorch = os.path.join(zkp_dir, f"network_{type_model}.pth")
+        data_path = os.path.join(zkp_dir, f"input_{type_model}.json")
+        data_path_pre = os.path.join(zkp_dir, f"pre_input_{type_model}.json")
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(link_onnx)
-        if response.status_code == 200:
-            with open(model_path_pytorch, "wb") as f:
-                f.write(response.content)
-        else:
-            return {"error": f"Failed to download {link_onnx}"}
+        vk_path = os.path.join(zkp_dir, f"test_{type_model}.vk")
+        settings_path = os.path.join(zkp_dir, f"settings_{type_model}.json")
+        srs_path = os.path.join(zkp_dir, f"kzg_{type_model}.srs")
+        proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
 
-    if type_model == "anti_fraud":
-        # base64_bytes = input_data.encode("utf-8")
-        # decoded_bytes = base64.b64decode(base64_bytes)
-        # decoded_string = decoded_bytes.decode("utf-8")
-        # data = pd.read_csv(io.StringIO(decoded_string))
-        data = pd.read_csv(input_data)
-
-        data = data.iloc[:1, :]
-
-        data_path = convert_model_data(
-            test_df_set=data,
-            model_path=model_path,
-            data_path=data_path,
-            model_path_pytorch=model_path_pytorch,
-        )
-        if not os.path.exists(data_path):
-            return {
-                "test.vk": None,
-                "test.pf": None,
-                "kzg.srs": None,
-                "settings.json": None,
-            }
-
-        await inference_ekzl(
-            vk_path=vk_path,
-            settings_path=settings_path,
-            srs_path=srs_path,
-            proof_path=proof_path,
-            data_path=data_path,
-            model_path=model_path,
-            type_model=type_model,
-        )
-        return {
-            "test.vk": [read_file_as_base64(vk_path)],
-            "test.pf": [read_file_as_base64(proof_path)],
-            "kzg.srs": [read_file_as_base64(srs_path)],
-            "settings.json": [read_file_as_base64(settings_path)],
-        }
-
-    elif type_model == "simple_kyc":
         async with httpx.AsyncClient() as client:
-            response = await client.get(input_data)
+            response = await client.get(link_onnx)
             if response.status_code == 200:
-                with open(data_path_pre, "wb") as f:
+                with open(model_path_pytorch, "wb") as f:
                     f.write(response.content)
             else:
                 return {"error": f"Failed to download {link_onnx}"}
 
-        with open(data_path_pre, "r") as f:
-            features_ = json.load(f)
+        if type_model == "anti_fraud":
+            # base64_bytes = input_data.encode("utf-8")
+            # decoded_bytes = base64.b64decode(base64_bytes)
+            # decoded_string = decoded_bytes.decode("utf-8")
+            # data = pd.read_csv(io.StringIO(decoded_string))
+            data = pd.read_csv(input_data.input_data)
 
-        output = {
-            "test.vk": [],
-            "test.pf": [],
-            "kzg.srs": [],
-            "settings.json": [],
-        }
-        for feat in features_["input_data"]:
+            data = data.iloc[:1, :]
+
+            data_path = convert_model_data(
+                test_df_set=data,
+                model_path=model_path,
+                data_path=data_path,
+                model_path_pytorch=model_path_pytorch,
+            )
+            assert os.path.exists(data_path), f"not found {data_path}"
+
+        elif type_model == "simple_kyc":
+            async with httpx.AsyncClient() as client:
+                response = await client.get(input_data.input_data)
+                if response.status_code == 200:
+                    with open(data_path_pre, "wb") as f:
+                        f.write(response.content)
+                else:
+                    return {"error": f"Failed to download {link_onnx}"}
+
+            with open(data_path_pre, "r") as f:
+                features_ = json.load(f)
+
+            features_pre = features_["input_data"]
+            features_ = [
+                [float(features_pre["age"]), MAP_RES[features_pre["residence"]]]
+            ]
+
             device = torch.device("cpu")
 
             model = SimpleKYC()
@@ -153,7 +147,7 @@ async def create_inference(item: Item):
             )  # Choose whatever GPU device number you want
             model.to(device)
 
-            te_x = torch.Tensor(feat).float()
+            te_x = torch.Tensor(features_).float()
             features = Variable(te_x)
 
             # Export the model
@@ -177,28 +171,20 @@ async def create_inference(item: Item):
             # Serialize data into file:
             json.dump(data, open(data_path, "w"))
 
-            await inference_ekzl(
-                vk_path=vk_path,
-                settings_path=settings_path,
-                srs_path=srs_path,
-                proof_path=proof_path,
-                data_path=data_path,
-                model_path=model_path,
-                type_model=type_model,
-            )
-            output["test.vk"].append(read_file_as_base64(vk_path))
-            output["test.pf"].append(read_file_as_base64(proof_path))
-            output["kzg.srs"].append(read_file_as_base64(srs_path))
-            output["settings.json"].append(read_file_as_base64(settings_path))
-
-        return output
-    else:
-        return {
-            "test.vk": None,
-            "test.pf": None,
-            "kzg.srs": None,
-            "settings.json": None,
-        }
+        await inference_ekzl(
+            vk_path=vk_path,
+            settings_path=settings_path,
+            srs_path=srs_path,
+            proof_path=proof_path,
+            data_path=data_path,
+            model_path=model_path,
+            type_model=type_model,
+        )
+        output_data_main["test.vk"].append(read_file_as_base64(vk_path))
+        output_data_main["test.pf"].append(read_file_as_base64(proof_path))
+        output_data_main["kzg.srs"].append(read_file_as_base64(srs_path))
+        output_data_main["settings.json"].append(read_file_as_base64(settings_path))
+    return output_data_main
 
     # with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
     #     vk = f.read()
