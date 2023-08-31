@@ -110,15 +110,23 @@ async def create_inference(item: Item):
                 "settings.json": None,
             }
 
+        await inference_ekzl(
+            vk_path=vk_path,
+            settings_path=settings_path,
+            srs_path=srs_path,
+            proof_path=proof_path,
+            data_path=data_path,
+            model_path=model_path,
+            type_model=type_model,
+        )
+        return {
+            "test.vk": [read_file_as_base64(vk_path)],
+            "test.pf": [read_file_as_base64(proof_path)],
+            "kzg.srs": [read_file_as_base64(srs_path)],
+            "settings.json": [read_file_as_base64(settings_path)],
+        }
+
     elif type_model == "simple_kyc":
-        device = torch.device("cpu")
-
-        model = SimpleKYC()
-        model.load_state_dict(
-            torch.load(model_path_pytorch, map_location=device)
-        )  # Choose whatever GPU device number you want
-        model.to(device)
-
         async with httpx.AsyncClient() as client:
             response = await client.get(input_data)
             if response.status_code == 200:
@@ -129,31 +137,61 @@ async def create_inference(item: Item):
 
         with open(data_path_pre, "r") as f:
             features_ = json.load(f)
-            features_ = json.loads(features_["input_data"])
 
-        te_x = torch.Tensor(features_).float()
-        features = Variable(te_x)
+        output = {
+            "test.vk": [],
+            "test.pf": [],
+            "kzg.srs": [],
+            "settings.json": [],
+        }
+        for feat in features_["input_data"]:
+            device = torch.device("cpu")
 
-        # Export the model
-        torch.onnx.export(
-            model,  # model being run
-            features,  # model input (or a tuple for multiple inputs)
-            model_path,  # where to save the model (can be a file or file-like object)
-            export_params=True,  # store the trained parameter weights inside the model file
-            opset_version=10,  # the ONNX version to export the model to
-            do_constant_folding=True,  # whether to execute constant folding for optimization
-            input_names=["input"],  # the model's input names
-            output_names=["output"],  # the model's output names
-            dynamic_axes={
-                "input": {0: "batch_size"},  # variable length axes
-                "output": {0: "batch_size"},
-            },
-        )
+            model = SimpleKYC()
+            model.load_state_dict(
+                torch.load(model_path_pytorch, map_location=device)
+            )  # Choose whatever GPU device number you want
+            model.to(device)
 
-        data = dict(input_data=features_)
+            te_x = torch.Tensor(feat).float()
+            features = Variable(te_x)
 
-        # Serialize data into file:
-        json.dump(data, open(data_path, "w"))
+            # Export the model
+            torch.onnx.export(
+                model,  # model being run
+                features,  # model input (or a tuple for multiple inputs)
+                model_path,  # where to save the model (can be a file or file-like object)
+                export_params=True,  # store the trained parameter weights inside the model file
+                opset_version=10,  # the ONNX version to export the model to
+                do_constant_folding=True,  # whether to execute constant folding for optimization
+                input_names=["input"],  # the model's input names
+                output_names=["output"],  # the model's output names
+                dynamic_axes={
+                    "input": {0: "batch_size"},  # variable length axes
+                    "output": {0: "batch_size"},
+                },
+            )
+
+            data = dict(input_data=features_)
+
+            # Serialize data into file:
+            json.dump(data, open(data_path, "w"))
+
+            await inference_ekzl(
+                vk_path=vk_path,
+                settings_path=settings_path,
+                srs_path=srs_path,
+                proof_path=proof_path,
+                data_path=data_path,
+                model_path=model_path,
+                type_model=type_model,
+            )
+            output["test.vk"].append(read_file_as_base64(vk_path))
+            output["test.pf"].append(read_file_as_base64(proof_path))
+            output["kzg.srs"].append(read_file_as_base64(srs_path))
+            output["settings.json"].append(read_file_as_base64(settings_path))
+
+        return output
     else:
         return {
             "test.vk": None,
@@ -161,23 +199,6 @@ async def create_inference(item: Item):
             "kzg.srs": None,
             "settings.json": None,
         }
-
-    await inference_ekzl(
-        vk_path=vk_path,
-        settings_path=settings_path,
-        srs_path=srs_path,
-        proof_path=proof_path,
-        data_path=data_path,
-        model_path=model_path,
-        type_model=type_model,
-    )
-
-    return {
-        "test.vk": read_file_as_base64(vk_path),
-        "test.pf": read_file_as_base64(proof_path),
-        "kzg.srs": read_file_as_base64(srs_path),
-        "settings.json": read_file_as_base64(settings_path),
-    }
 
     # with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
     #     vk = f.read()
@@ -293,21 +314,41 @@ async def download_file(filename: str):
 #     return {"result": result}
 
 
+# @app.post("/verify")
+# async def verify_files_url(inputs=Body(...)):
+#     for field, input_data in inputs.items():
+#         base64_bytes = input_data.encode("utf-8")
+#         decoded_bytes = base64.b64decode(base64_bytes)
+#         # decoded_string = decoded_bytes.decode("utf-8")
+#         with open(os.path.join(zkp_dir, field), "wb") as f:
+#             f.write(decoded_bytes)
+#
+#     result = await verify(
+#         proof_path=os.path.join(zkp_dir, "test.pf"),
+#         settings_path=os.path.join(zkp_dir, "settings.json"),
+#         vk_path=os.path.join(zkp_dir, "test.vk"),
+#         srs_path=os.path.join(zkp_dir, "kzg.srs"),
+#     )
+#
+#     return {"result": result}
 @app.post("/verify")
 async def verify_files_url(inputs=Body(...)):
+    result = []
     for field, input_data in inputs.items():
-        base64_bytes = input_data.encode("utf-8")
-        decoded_bytes = base64.b64decode(base64_bytes)
-        # decoded_string = decoded_bytes.decode("utf-8")
-        with open(os.path.join(zkp_dir, field), "wb") as f:
-            f.write(decoded_bytes)
+        for file_item in input_data:
+            base64_bytes = file_item.encode("utf-8")
+            decoded_bytes = base64.b64decode(base64_bytes)
+            # decoded_string = decoded_bytes.decode("utf-8")
+            with open(os.path.join(zkp_dir, field), "wb") as f:
+                f.write(decoded_bytes)
 
-    result = await verify(
-        proof_path=os.path.join(zkp_dir, "test.pf"),
-        settings_path=os.path.join(zkp_dir, "settings.json"),
-        vk_path=os.path.join(zkp_dir, "test.vk"),
-        srs_path=os.path.join(zkp_dir, "kzg.srs"),
-    )
+            r = await verify(
+                proof_path=os.path.join(zkp_dir, "test.pf"),
+                settings_path=os.path.join(zkp_dir, "settings.json"),
+                vk_path=os.path.join(zkp_dir, "test.vk"),
+                srs_path=os.path.join(zkp_dir, "kzg.srs"),
+            )
+            result.append(r)
 
     return {"result": result}
 
