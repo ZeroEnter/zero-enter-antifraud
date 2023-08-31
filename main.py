@@ -317,7 +317,7 @@ async def download_file(filename: str):
 @app.post("/verify")
 async def verify_files_url(inputs=Body(...)):
     result = []
-    inputs_ = inputs.get("input_data")
+    inputs_ = inputs.get("output")
     for input_data in inputs_:
         for field, file_item in input_data.items():
             base64_bytes = file_item.encode("utf-8")
