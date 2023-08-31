@@ -77,12 +77,7 @@ async def verify(
 @app.post("/inference")
 async def create_inference(item: ItemMain):
     input_data_main = item.input_data
-    output_data_main = {
-        "test.vk": [],
-        "test.pf": [],
-        "kzg.srs": [],
-        "settings.json": [],
-    }
+    output_data_main = {"output": []}
 
     for input_data in input_data_main:
         type_model = input_data.type_model
@@ -180,10 +175,12 @@ async def create_inference(item: ItemMain):
             model_path=model_path,
             type_model=type_model,
         )
-        output_data_main["test.vk"].append(read_file_as_base64(vk_path))
-        output_data_main["test.pf"].append(read_file_as_base64(proof_path))
-        output_data_main["kzg.srs"].append(read_file_as_base64(srs_path))
-        output_data_main["settings.json"].append(read_file_as_base64(settings_path))
+        output_data_main["output"].append({
+            "test.vk": read_file_as_base64(vk_path),
+            "test.pf": read_file_as_base64(proof_path),
+            "kzg.srs": read_file_as_base64(srs_path),
+            "settings.json": read_file_as_base64(settings_path),
+        })
     return output_data_main
 
     # with open(os.path.join(zkp_dir, f"test_{type_model}.vk"), "rb") as f:
@@ -320,21 +317,22 @@ async def download_file(filename: str):
 @app.post("/verify")
 async def verify_files_url(inputs=Body(...)):
     result = []
-    for field, input_data in inputs.items():
-        for file_item in input_data:
+    inputs_ = inputs.get("input_data")
+    for input_data in inputs_:
+        for field, file_item in input_data.items():
             base64_bytes = file_item.encode("utf-8")
             decoded_bytes = base64.b64decode(base64_bytes)
             # decoded_string = decoded_bytes.decode("utf-8")
             with open(os.path.join(zkp_dir, field), "wb") as f:
                 f.write(decoded_bytes)
 
-            r = await verify(
-                proof_path=os.path.join(zkp_dir, "test.pf"),
-                settings_path=os.path.join(zkp_dir, "settings.json"),
-                vk_path=os.path.join(zkp_dir, "test.vk"),
-                srs_path=os.path.join(zkp_dir, "kzg.srs"),
-            )
-            result.append(r)
+        r = await verify(
+            proof_path=os.path.join(zkp_dir, "test.pf"),
+            settings_path=os.path.join(zkp_dir, "settings.json"),
+            vk_path=os.path.join(zkp_dir, "test.vk"),
+            srs_path=os.path.join(zkp_dir, "kzg.srs"),
+        )
+        result.append(r)
 
     return {"result": result}
 

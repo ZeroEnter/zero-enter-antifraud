@@ -23,12 +23,12 @@ def test():
     proof_path = os.path.join(zkp_dir, f"test_{type_model}.pf")
 
     headers = {"Content-Type": "application/json"}
-    data = {
+    data = {"input_data": [{
         "test.vk": to_b64(vk_path),
         "test.pf": to_b64(proof_path),
         "kzg.srs": to_b64(srs_path),
         "settings.json": to_b64(settings_path),
-    }
+    }]}
 
     response = requests.post(url, headers=headers, json=data)
     print(response.content)
