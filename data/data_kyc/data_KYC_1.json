@@ -1,0 +1,14 @@
+{
+  "input_data": {
+    "first_name": "John",
+    "last_name": "Doe",
+    "age": 19,
+    "residence": "US",
+    "address": {
+      "street": "123 Main St",
+      "city": "New York",
+      "state": "NY",
+      "postal_code": "10001"
+    }
+  }
+}

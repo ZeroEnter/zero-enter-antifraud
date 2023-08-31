@@ -1,0 +1,14 @@
+{
+  "input_data": {
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "age": 21,
+    "residence": "Luxembourg",
+    "address": {
+        "street": "456 Central Blvd",
+        "city": "Luxembourg City",
+        "state": "Luxembourg District",
+        "postal_code": "L-1234"
+    }
+  },
+}
