@@ -129,6 +129,7 @@ async def create_inference(item: Item):
 
         with open(data_path_pre, "r") as f:
             features_ = json.load(f)
+            features_ = json.loads(features_["input_data"])
 
         te_x = torch.Tensor(features_).float()
         features = Variable(te_x)
